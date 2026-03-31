@@ -15,12 +15,14 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Routes
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 // Basic test route
 app.get('/', (req, res) => {
-  res.json({ message: '🚀 Job Board API is running! (v1)' });
+  res.json({ message: '🚀 Job Board API is running! (v1 with Auth)' });
 });
-
-// TODO: We will add auth and jobs routes here later
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
