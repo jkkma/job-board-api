@@ -16,21 +16,25 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jobs Job[]     // employer posts these
+  jobs         Job[] // employer posts these
+  applications Application[]
+
   @@map("users")
 }
 
 model Job {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
   description String
   location    String?
   salary      String?
-  type        String?  // full-time, part-time, remote etc.
-  isActive    Boolean  @default(true)
+  type        String? // full-time, part-time, remote etc.
+  isActive    Boolean @default(true)
 
   employerId String
-  employer   User     @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  employer   User   @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  applications Application[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -41,4 +45,28 @@ model Job {
 enum Role {
   EMPLOYER
   APPLICANT
+}
+
+model Application {
+  id          String  @id @default(uuid())
+  coverLetter String?
+  status      Status  @default(PENDING)
+
+  applicantId String
+  applicant   User   @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([applicantId, jobId]) // prevent duplicate applications
+  @@map("applications")
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
