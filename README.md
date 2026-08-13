@@ -13,7 +13,7 @@ Built with **TypeScript, Express 5, Prisma, and PostgreSQL**. JWT authentication
 
 > **Live demo:** <https://job-board-api-3ga1.onrender.com>
 > Interactive API reference at [`/docs`](https://job-board-api-3ga1.onrender.com/docs), machine-readable spec at [`/openapi.json`](https://job-board-api-3ga1.onrender.com/openapi.json).
-> Hosted on Render's free tier, so the instance sleeps after ~15 minutes idle — the first request after that takes roughly 30–50 seconds while it wakes.
+> Hosted on Render's free tier, so the instance sleeps after ~15 minutes idle — a measured cold start is **~43 seconds**: ~15s to schedule the container, ~20s running `prisma migrate deploy` and the seed before the port binds, then ~8s while the load balancer waits for the first health check to pass.
 
 ---
 
