@@ -173,6 +173,7 @@ src/
   controllers/           # request handling and ownership checks
   validations/schemas.ts # every request schema
   docs/openapi.ts        # the OpenAPI document served at /docs
+  docs/landing.ts        # the HTML page browsers get at /
 ```
 
 ## API reference
@@ -180,6 +181,8 @@ src/
 Base URL `/api/v1`. Full interactive reference at **`/docs`**; the spec is at `/openapi.json`.
 
 Protected routes take `Authorization: Bearer <token>`.
+
+`/` is content-negotiated: a browser gets an HTML landing page, while `curl` and anything else sending `*/*` gets the JSON discovery document `{ "message", "version", "docs" }`.
 
 ### Auth
 
