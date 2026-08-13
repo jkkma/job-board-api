@@ -176,6 +176,46 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('API documentation', () => {
+  it('serves Swagger UI at /docs despite helmet’s CSP', async () => {
+    // helmet's default Content-Security-Policy blocks Swagger UI's inline
+    // styles and scripts, which renders the page blank. /docs is therefore
+    // mounted ahead of the global helmet with its own relaxed policy — this
+    // test is what catches a regression in that ordering.
+    const res = await request(app).get('/docs/').redirects(1);
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('swagger-ui');
+    expect(res.headers['content-security-policy']).toBeUndefined();
+  });
+
+  it('keeps the strict CSP on the rest of the app', async () => {
+    const res = await request(app).get('/health');
+
+    expect(res.headers['content-security-policy']).toBeDefined();
+  });
+
+  it('serves the machine-readable spec at /openapi.json', async () => {
+    const res = await request(app).get('/openapi.json');
+
+    expect(res.status).toBe(200);
+    expect(res.body.openapi).toBe('3.0.3');
+    expect(Object.keys(res.body.paths)).toEqual(
+      expect.arrayContaining([
+        '/auth/register',
+        '/auth/login',
+        '/auth/me',
+        '/jobs',
+        '/jobs/{id}',
+        '/applications',
+        '/applications/my',
+        '/applications/job/{id}',
+        '/applications/{id}/status',
+      ])
+    );
+  });
+});
+
 describe('configuration and errors', () => {
   it('rejects a JWT_SECRET that is too short to be worth having', () => {
     const result = envSchema.safeParse({
