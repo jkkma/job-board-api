@@ -176,6 +176,72 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('root route', () => {
+  // Chrome, Firefox, and Safari all lead with text/html and rank */* below it.
+  const BROWSER_ACCEPT = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+
+  it('serves the landing page to a browser', async () => {
+    const res = await request(app).get('/').set('Accept', BROWSER_ACCEPT);
+
+    expect(res.status).toBe(200);
+    expect(res.type).toBe('text/html');
+    expect(res.text).toContain('<title>Job Board API</title>');
+    expect(res.text).toContain('href="/docs"');
+    expect(res.text).toContain('href="/openapi.json"');
+  });
+
+  it.each([
+    ['no Accept header at all', undefined],
+    ['the */* that curl sends', '*/*'],
+    ['an explicit application/json', 'application/json'],
+  ])('still answers %s with the JSON discovery document', async (_label, accept) => {
+    // The landing page is for humans. Anything that is not asking for HTML must
+    // keep getting the payload the root has always returned, or every client
+    // that probes `/` to discover the API breaks on a cosmetic change.
+    const pending = request(app).get('/');
+    const res = await (accept === undefined ? pending : pending.set('Accept', accept));
+
+    expect(res.status).toBe(200);
+    expect(res.type).toBe('application/json');
+    expect(res.body).toEqual({ message: 'Job Board API', version: 'v1', docs: '/docs' });
+  });
+
+  it('keeps the landing page inside the strict CSP, which must allow inline styles', async () => {
+    // Unlike /docs, the landing page is served behind the global helmet. It
+    // carries no scripts so `script-src 'self'` costs it nothing, but its
+    // stylesheet is a <style> block — if helmet's default style-src ever stops
+    // allowing inline styles, the page renders unstyled rather than failing
+    // loudly, so assert the grant rather than trusting it.
+    const res = await request(app).get('/').set('Accept', BROWSER_ACCEPT);
+
+    const csp = res.headers['content-security-policy'];
+    expect(csp).toBeDefined();
+    expect(csp).toContain("style-src 'self' https: 'unsafe-inline'");
+  });
+
+  it('points its curl examples at the host the request arrived on', async () => {
+    const res = await request(app)
+      .get('/')
+      .set('Accept', BROWSER_ACCEPT)
+      .set('Host', 'jobs.example.com');
+
+    expect(res.text).toContain('curl http://jobs.example.com/api/v1/jobs');
+  });
+
+  it('escapes the Host header instead of reflecting it as markup', async () => {
+    // The Host header is client-controlled even behind a proxy, and it is
+    // interpolated into the page, so it goes through the same escaping as any
+    // other untrusted string.
+    const res = await request(app)
+      .get('/')
+      .set('Accept', BROWSER_ACCEPT)
+      .set('Host', 'evil.example.com/"><script>alert(1)</script>');
+
+    expect(res.text).not.toContain('<script>alert(1)</script>');
+    expect(res.text).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+});
+
 describe('API documentation', () => {
   it('serves Swagger UI at /docs despite helmet’s CSP', async () => {
     // helmet's default Content-Security-Policy blocks Swagger UI's inline

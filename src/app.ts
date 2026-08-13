@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 
 import { openapiSpec } from './docs/openapi';
+import { renderLandingPage } from './docs/landing';
 
 import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
@@ -70,7 +71,19 @@ export const buildApp = (options: AppOptions = {}): Express => {
   // Nothing this API accepts is anywhere near 100kb; the default is unbounded.
   app.use(express.json({ limit: '100kb' }));
 
-  app.get('/', (_req, res) => {
+  // Content-negotiated on purpose. A browser lands on a page that explains what
+  // this is and links to /docs; curl, fetch, and anything else sending `*/*`
+  // keep the JSON discovery document unchanged, so the root stays a usable API
+  // endpoint rather than becoming a wall of markup.
+  //
+  // The array order matters: `req.accepts` falls back to the first entry when
+  // the client expresses no preference, which is what keeps `*/*` on JSON.
+  app.get('/', (req, res) => {
+    if (req.accepts(['json', 'html']) === 'html') {
+      res.type('html').send(renderLandingPage(`${req.protocol}://${req.get('host') ?? ''}`));
+      return;
+    }
+
     res.json({ message: 'Job Board API', version: 'v1', docs: '/docs' });
   });
 
