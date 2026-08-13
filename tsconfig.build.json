@@ -1,10 +1,13 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": "src",
+    // rootDir is the project root rather than src/ so the seed script is
+    // compiled alongside the app and ends up in the image. Output is therefore
+    // dist/src/server.js and dist/prisma/seed.js.
+    "rootDir": ".",
     "outDir": "dist",
     "sourceMap": false
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests", "prisma"]
+  "include": ["src/**/*.ts", "prisma/seed.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
 }

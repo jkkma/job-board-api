@@ -1,0 +1,33 @@
+# Render blueprint: a web service plus a managed Postgres.
+# Deploy with: Render dashboard -> New -> Blueprint -> point at this repo.
+services:
+  - type: web
+    name: job-board-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npx prisma generate && npm run build
+    # Migrations run on every deploy; the seed is idempotent, so the demo data
+    # is restored without duplicating rows.
+    startCommand: npx prisma migrate deploy && node dist/prisma/seed.js && node dist/src/server.js
+    healthCheckPath: /health/ready
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: job-board-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      # Render terminates TLS at a single load balancer in front of the app, so
+      # the client IP is one hop away. An exact count, never `true`.
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      - key: CORS_ORIGIN
+        sync: false
+
+databases:
+  - name: job-board-db
+    plan: free
+    region: frankfurt
