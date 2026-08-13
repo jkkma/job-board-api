@@ -23,13 +23,24 @@ model User {
 }
 
 model Job {
-  id          String  @id @default(uuid())
+  id          String @id @default(uuid())
   title       String
   description String
   location    String?
-  salary      String?
-  type        String? // full-time, part-time, remote etc.
-  isActive    Boolean @default(true)
+
+  // Stored as integers rather than a free-form string so the listing endpoint
+  // can filter on a range. `salaryMin`/`salaryMax` are the advertised band.
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String @default("USD")
+
+  // Employment type and work location are orthogonal — a role can be both
+  // FULL_TIME and REMOTE — so they are separate fields rather than the single
+  // free-form `type` string this replaced.
+  type     JobType?
+  workMode WorkMode?
+
+  isActive Boolean @default(true)
 
   employerId String
   employer   User   @relation(fields: [employerId], references: [id], onDelete: Cascade)
@@ -39,7 +50,14 @@ model Job {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Matches the access path of the listing query: filter on isActive, order by
+  // createdAt descending.
+  @@index([isActive, createdAt(sort: Desc)])
+  @@index([employerId])
   @@map("jobs")
+  // Note: there is deliberately no index on `title`/`description`. The search
+  // filter uses `contains` (ILIKE '%term%'), which a btree index cannot serve.
+  // Making that query indexed needs a pg_trgm GIN index — see the README.
 }
 
 enum Role {
@@ -47,10 +65,23 @@ enum Role {
   APPLICANT
 }
 
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
 model Application {
-  id          String  @id @default(uuid())
+  id          String @id @default(uuid())
   coverLetter String?
-  status      Status  @default(PENDING)
+  status      Status @default(PENDING)
 
   applicantId String
   applicant   User   @relation(fields: [applicantId], references: [id], onDelete: Cascade)
@@ -61,7 +92,13 @@ model Application {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([applicantId, jobId]) // prevent duplicate applications
+  // Prevents duplicate applications, and doubles as the index for
+  // "applications by this applicant" — a leading-column prefix of the unique
+  // index — so no separate @@index([applicantId]) is needed.
+  @@unique([applicantId, jobId])
+  // Employer-facing lookup ("all applications for this job") has no such
+  // covering index, so it gets its own.
+  @@index([jobId])
   @@map("applications")
 }
 

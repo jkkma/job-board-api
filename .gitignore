@@ -10,7 +10,8 @@ yarn-error.log*
 !.env.example
 
 # Prisma
-prisma/migrations/
+# prisma/migrations/ is intentionally NOT ignored — committed migration history
+# is what makes `prisma migrate deploy` possible in CI and in the container.
 *.db
 
 # Logs

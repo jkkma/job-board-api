@@ -13,6 +13,9 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    // In Prisma 6.19 the seed command lives here, not under `prisma.seed` in
+    // package.json — that key is silently ignored.
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     url: databaseUrl,
