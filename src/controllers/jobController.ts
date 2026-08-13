@@ -45,7 +45,10 @@ export const getJobById = async (req: Request<{ id: string }>, res: Response): P
 
   const job = await prisma.job.findUnique({
     where: { id },
-    include: { employer: { select: { name: true, email: true } } },
+    // Name only. This route is public, so including the employer's email here
+    // would publish every employer address in the database to anyone crawling
+    // job listings.
+    include: { employer: { select: { id: true, name: true } } },
   });
   if (!job) throw ApiError.notFound('Job not found');
 
@@ -76,7 +79,8 @@ export const deleteJob = async (req: Request<{ id: string }>, res: Response): Pr
   if (!job) throw ApiError.notFound('Job not found');
   if (job.employerId !== req.user!.id) throw ApiError.forbidden();
 
+  // Cascade removes the job's applications (see prisma/schema.prisma).
   await prisma.job.delete({ where: { id } });
 
-  res.json({ message: 'Job deleted' });
+  res.status(204).send();
 };

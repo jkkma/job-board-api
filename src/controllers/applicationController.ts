@@ -7,10 +7,7 @@ export const applyToJob = async (req: Request, res: Response): Promise<void> => 
   const { jobId, coverLetter } = req.body as ApplyInput;
   const applicantId = req.user!.id;
 
-  if (req.user!.role !== 'APPLICANT') {
-    throw ApiError.forbidden('Only applicants can apply');
-  }
-
+  // The APPLICANT role gate lives on the route (requireRole), not here.
   const job = await prisma.job.findUnique({ where: { id: jobId }, select: { isActive: true } });
   if (!job?.isActive) {
     throw ApiError.notFound('Job not found or closed');
