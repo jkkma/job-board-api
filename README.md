@@ -11,8 +11,9 @@ Built with **TypeScript, Express 5, Prisma, and PostgreSQL**. JWT authentication
 
 ![Swagger UI showing the Job Board API endpoints](docs/assets/swagger-ui.png)
 
-> **Live demo:** _(deploy with the included `render.yaml`, then put the URL here)_
-> Interactive API reference at `/docs`, machine-readable spec at `/openapi.json`.
+> **Live demo:** <https://job-board-api-3ga1.onrender.com>
+> Interactive API reference at [`/docs`](https://job-board-api-3ga1.onrender.com/docs), machine-readable spec at [`/openapi.json`](https://job-board-api-3ga1.onrender.com/openapi.json).
+> Hosted on Render's free tier, so the instance sleeps after ~15 minutes idle — the first request after that takes roughly 30–50 seconds while it wakes.
 
 ---
 
