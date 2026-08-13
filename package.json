@@ -1,16 +1,46 @@
 {
   "name": "job-board-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "REST API for a job board — employers post jobs, applicants apply, employers accept or reject. Express 5, TypeScript, Prisma, PostgreSQL, JWT auth with role-based access control.",
+  "main": "dist/server.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
+  },
+  "keywords": [
+    "express",
+    "typescript",
+    "prisma",
+    "postgresql",
+    "rest-api",
+    "jwt",
+    "zod",
+    "job-board"
+  ],
+  "author": "Jonathan Merlo Apuril",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jkkma/job-board-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jkkma/job-board-api/issues"
+  },
+  "homepage": "https://github.com/jkkma/job-board-api#readme",
   "dependencies": {
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.3",
@@ -23,7 +53,18 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^6.19.2"
+    "@eslint/js": "^10.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.2.0",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
+    "prisma": "^6.19.2",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.67.0"
   }
 }
