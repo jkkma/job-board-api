@@ -1,24 +1,16 @@
 import type { Request, Response, NextFunction } from 'express';
-import { z, type ZodType } from 'zod';
+import type { ZodType } from 'zod';
 
+/**
+ * Validates `req.body` against a Zod schema, replacing it with the parsed
+ * result so unknown keys are stripped before a controller ever sees them.
+ *
+ * A `ZodError` is thrown rather than answered here — `errorHandler` owns the
+ * translation to a 400, so the response shape is defined in exactly one place.
+ */
 export const validate =
   (schema: ZodType) =>
-  (req: Request, res: Response, next: NextFunction): void => {
-    try {
-      req.body = schema.parse(req.body);
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({
-          error: 'Validation failed',
-          issues: error.issues.map((issue) => ({
-            path: issue.path.join('.'),
-            message: issue.message,
-          })),
-        });
-        return;
-      }
-
-      next(error);
-    }
+  (req: Request, _res: Response, next: NextFunction): void => {
+    req.body = schema.parse(req.body);
+    next();
   };

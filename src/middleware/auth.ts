@@ -1,22 +1,21 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env';
+import { ApiError } from '../lib/ApiError';
 import type { AuthUser } from '../types/express';
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.split(' ')[1]; // "Bearer <token>"
+export const authenticateToken = (req: Request, _res: Response, next: NextFunction): void => {
+  const [scheme, token] = req.headers.authorization?.split(' ') ?? [];
 
-  if (!token) {
-    res.status(401).json({ error: 'Access token required' });
-    return;
+  if (scheme !== 'Bearer' || !token) {
+    throw ApiError.unauthorized('Access token required');
   }
 
-  jwt.verify(token, process.env.JWT_SECRET as string, (err, decoded) => {
-    if (err) {
-      res.status(403).json({ error: 'Invalid or expired token' });
-      return;
-    }
-    req.user = decoded as AuthUser;
-    next();
-  });
+  try {
+    req.user = jwt.verify(token, env.JWT_SECRET) as AuthUser;
+  } catch {
+    throw new ApiError(403, 'FORBIDDEN', 'Invalid or expired token');
+  }
+
+  next();
 };
