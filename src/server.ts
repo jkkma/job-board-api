@@ -1,13 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const dotenv = require('dotenv');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+
+import authRoutes from './routes/auth';
+import jobRoutes from './routes/jobs';
+import applicationRoutes from './routes/applications';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ?? 5000;
 
 // Middleware
 app.use(helmet());
@@ -16,16 +20,12 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // Routes
-const authRoutes = require('./routes/auth');
-const jobRoutes = require('./routes/jobs');
-const applicationRoutes = require('./routes/applications');
-
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 
 // Basic test route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({ message: '🚀 Job Board API is running! (v1 with Auth)' });
 });
 

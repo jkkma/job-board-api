@@ -4,14 +4,14 @@ A REST API for a job board, built with Express 5, Prisma, and PostgreSQL. Employ
 
 ## Tech Stack
 
-| Concern | Choice |
-| --- | --- |
-| Runtime | Node.js (CommonJS) |
-| Framework | Express 5 |
-| Database | PostgreSQL via Prisma ORM 6 |
-| Auth | `jsonwebtoken` (HS256, 7-day expiry) + `bcryptjs` (cost 10) |
-| Validation | Zod 4 |
-| Hardening / logging | `helmet`, `cors`, `morgan` |
+| Concern             | Choice                                                      |
+| ------------------- | ----------------------------------------------------------- |
+| Runtime             | Node.js (CommonJS)                                          |
+| Framework           | Express 5                                                   |
+| Database            | PostgreSQL via Prisma ORM 6                                 |
+| Auth                | `jsonwebtoken` (HS256, 7-day expiry) + `bcryptjs` (cost 10) |
+| Validation          | Zod 4                                                       |
+| Hardening / logging | `helmet`, `cors`, `morgan`                                  |
 
 ## Project Structure
 
@@ -94,31 +94,31 @@ Protected routes require an `Authorization: Bearer <token>` header. Missing toke
 
 ### Auth — `/api/auth`
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/register` | — | Create an account. Body: `email`, `password` (min 6), `role` (`EMPLOYER` \| `APPLICANT`), `name?`. Returns `201` with the new user; `400` if the email is taken. |
-| `POST` | `/login` | — | Body: `email`, `password`. Returns a JWT plus the user; `400` on bad credentials. |
+| Method | Path        | Auth | Description                                                                                                                                                      |
+| ------ | ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST` | `/register` | —    | Create an account. Body: `email`, `password` (min 6), `role` (`EMPLOYER` \| `APPLICANT`), `name?`. Returns `201` with the new user; `400` if the email is taken. |
+| `POST` | `/login`    | —    | Body: `email`, `password`. Returns a JWT plus the user; `400` on bad credentials.                                                                                |
 
 The token payload carries `{ id, email, role }` and expires in 7 days.
 
 ### Jobs — `/api/jobs`
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/` | — | List active jobs, newest first. Query params: `search` (case-insensitive match on title or description), `location` (case-insensitive contains). |
-| `GET` | `/:id` | — | Fetch one job with employer name and email. `404` if not found. |
-| `POST` | `/` | ✅ | Create a job owned by the caller. Body: `title` (min 3), `description` (min 10), `location?`, `salary?`, `type?`. |
-| `PUT` | `/:id` | ✅ owner | Update any subset of the above plus `isActive`. `403` if the caller isn't the job's employer. |
-| `DELETE` | `/:id` | ✅ owner | Delete the job (and its applications, via cascade). `403` if not the owner. |
+| Method   | Path   | Auth     | Description                                                                                                                                      |
+| -------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/`    | —        | List active jobs, newest first. Query params: `search` (case-insensitive match on title or description), `location` (case-insensitive contains). |
+| `GET`    | `/:id` | —        | Fetch one job with employer name and email. `404` if not found.                                                                                  |
+| `POST`   | `/`    | ✅       | Create a job owned by the caller. Body: `title` (min 3), `description` (min 10), `location?`, `salary?`, `type?`.                                |
+| `PUT`    | `/:id` | ✅ owner | Update any subset of the above plus `isActive`. `403` if the caller isn't the job's employer.                                                    |
+| `DELETE` | `/:id` | ✅ owner | Delete the job (and its applications, via cascade). `403` if not the owner.                                                                      |
 
 ### Applications — `/api/applications`
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/` | ✅ applicant | Apply to a job. Body: `jobId` (uuid), `coverLetter?`. `403` unless the caller's role is `APPLICANT`; `404` if the job is missing or inactive; `400` on a duplicate application. |
-| `GET` | `/my` | ✅ | The caller's own applications, newest first, each with basic job info. |
-| `GET` | `/job/:id` | ✅ owner | All applications for one of the caller's jobs, with applicant details. `403` if the caller doesn't own the job. |
-| `PATCH` | `/:id/status` | ✅ owner | Body: `status` (`ACCEPTED` \| `REJECTED`). `403` unless the caller owns the job the application targets. |
+| Method  | Path          | Auth         | Description                                                                                                                                                                     |
+| ------- | ------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`  | `/`           | ✅ applicant | Apply to a job. Body: `jobId` (uuid), `coverLetter?`. `403` unless the caller's role is `APPLICANT`; `404` if the job is missing or inactive; `400` on a duplicate application. |
+| `GET`   | `/my`         | ✅           | The caller's own applications, newest first, each with basic job info.                                                                                                          |
+| `GET`   | `/job/:id`    | ✅ owner     | All applications for one of the caller's jobs, with applicant details. `403` if the caller doesn't own the job.                                                                 |
+| `PATCH` | `/:id/status` | ✅ owner     | Body: `status` (`ACCEPTED` \| `REJECTED`). `403` unless the caller owns the job the application targets.                                                                        |
 
 ### Validation Errors
 
@@ -127,9 +127,7 @@ Any request whose body fails its Zod schema returns `400` in this shape:
 ```json
 {
   "error": "Validation failed",
-  "issues": [
-    { "path": "password", "message": "Password must be at least 6 characters" }
-  ]
+  "issues": [{ "path": "password", "message": "Password must be at least 6 characters" }]
 }
 ```
 
@@ -164,13 +162,13 @@ curl -X POST http://localhost:5000/api/applications \
 
 ## Scripts
 
-| Command | Action |
-| --- | --- |
-| `npm run dev` | Start with nodemon |
-| `npm start` | Start with node |
-| `npx prisma studio` | Browse the database in a GUI |
+| Command                  | Action                       |
+| ------------------------ | ---------------------------- |
+| `npm run dev`            | Start with nodemon           |
+| `npm start`              | Start with node              |
+| `npx prisma studio`      | Browse the database in a GUI |
 | `npx prisma migrate dev` | Create and apply a migration |
-| `npx prisma generate` | Regenerate the Prisma client |
+| `npx prisma generate`    | Regenerate the Prisma client |
 
 ## License
 
