@@ -11,11 +11,20 @@ export interface AuthUser {
   role: Role;
 }
 
+/** Output of the `validate` middleware. See src/middleware/validate.ts. */
+export interface ValidatedRequestData {
+  body?: unknown;
+  query?: unknown;
+  params?: unknown;
+}
+
 declare global {
   namespace Express {
     interface Request {
       /** Set by `authenticateToken`. Undefined on public routes. */
       user?: AuthUser;
+      /** Set by `validate`. Undefined on routes with no schema attached. */
+      validated?: ValidatedRequestData;
     }
   }
 }

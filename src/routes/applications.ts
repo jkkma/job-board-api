@@ -8,21 +8,33 @@ import {
   getJobApplications,
   updateApplicationStatus,
 } from '../controllers/applicationController';
-import { applySchema, updateStatusSchema } from '../validations/schemas';
+import { applySchema, updateStatusSchema, idParamSchema } from '../validations/schemas';
 
 const router = express.Router();
 
 // Applicants
-router.post('/', authenticateToken, requireRole('APPLICANT'), validate(applySchema), applyToJob);
+router.post(
+  '/',
+  authenticateToken,
+  requireRole('APPLICANT'),
+  validate({ body: applySchema }),
+  applyToJob
+);
 router.get('/my', authenticateToken, getMyApplications);
 
 // Employers — ownership of the underlying job is checked in the controller.
-router.get('/job/:id', authenticateToken, requireRole('EMPLOYER'), getJobApplications);
+router.get(
+  '/job/:id',
+  authenticateToken,
+  requireRole('EMPLOYER'),
+  validate({ params: idParamSchema }),
+  getJobApplications
+);
 router.patch(
   '/:id/status',
   authenticateToken,
   requireRole('EMPLOYER'),
-  validate(updateStatusSchema),
+  validate({ params: idParamSchema, body: updateStatusSchema }),
   updateApplicationStatus
 );
 

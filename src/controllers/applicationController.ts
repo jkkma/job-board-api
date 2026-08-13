@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
-import type { ApplyInput, UpdateStatusInput } from '../validations/schemas';
+import { getParams } from '../middleware/validate';
+import type { ApplyInput, UpdateStatusInput, IdParam } from '../validations/schemas';
 
 export const applyToJob = async (req: Request, res: Response): Promise<void> => {
   const { jobId, coverLetter } = req.body as ApplyInput;
@@ -19,8 +20,8 @@ export const applyToJob = async (req: Request, res: Response): Promise<void> => 
   const application = await prisma.application.create({
     data: { jobId, applicantId, coverLetter: coverLetter ?? null },
     include: {
-      job: { select: { title: true } },
-      applicant: { select: { name: true, email: true } },
+      job: { select: { id: true, title: true } },
+      applicant: { select: { id: true, name: true, email: true } },
     },
   });
 
@@ -30,20 +31,20 @@ export const applyToJob = async (req: Request, res: Response): Promise<void> => 
 export const getMyApplications = async (req: Request, res: Response): Promise<void> => {
   const applications = await prisma.application.findMany({
     where: { applicantId: req.user!.id },
-    include: { job: { select: { id: true, title: true, location: true } } },
+    include: { job: { select: { id: true, title: true, location: true, isActive: true } } },
     orderBy: { createdAt: 'desc' },
   });
 
-  res.json(applications);
+  res.json({ data: applications });
 };
 
-export const getJobApplications = async (
-  req: Request<{ id: string }>,
-  res: Response
-): Promise<void> => {
-  const { id: jobId } = req.params;
+export const getJobApplications = async (req: Request, res: Response): Promise<void> => {
+  const { id: jobId } = getParams<IdParam>(req);
 
   const job = await prisma.job.findUnique({ where: { id: jobId }, select: { employerId: true } });
+  // 404 and 403 are distinguished here: folding "no such job" into "not
+  // authorized" would tell the caller nothing useful and is inconsistent with
+  // how the job routes behave.
   if (!job) throw ApiError.notFound('Job not found');
   if (job.employerId !== req.user!.id) throw ApiError.forbidden();
 
@@ -53,14 +54,11 @@ export const getJobApplications = async (
     orderBy: { createdAt: 'desc' },
   });
 
-  res.json(applications);
+  res.json({ data: applications });
 };
 
-export const updateApplicationStatus = async (
-  req: Request<{ id: string }>,
-  res: Response
-): Promise<void> => {
-  const { id } = req.params;
+export const updateApplicationStatus = async (req: Request, res: Response): Promise<void> => {
+  const { id } = getParams<IdParam>(req);
   const { status } = req.body as UpdateStatusInput;
 
   const application = await prisma.application.findUnique({

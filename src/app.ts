@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
 import applicationRoutes from './routes/applications';
+import healthRoutes from './routes/health';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 import { createAuthLimiter } from './middleware/rateLimit';
 import { env } from './config/env';
@@ -51,6 +52,10 @@ export const buildApp = (options: AppOptions = {}): Express => {
   app.get('/', (_req, res) => {
     res.json({ message: 'Job Board API', version: 'v1', docs: '/docs' });
   });
+
+  // Probes live outside /api — they are infrastructure, not part of the API
+  // contract, and should not be versioned alongside it.
+  app.use('/health', healthRoutes);
 
   app.use('/api/v1/auth', createAuthLimiter(options.authRateLimitMax), authRoutes);
   app.use('/api/v1/jobs', jobRoutes);
