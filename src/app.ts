@@ -2,6 +2,9 @@ import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
+
+import { openapiSpec } from './docs/openapi';
 
 import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
@@ -30,7 +33,25 @@ export const buildApp = (options: AppOptions = {}): Express => {
     app.set('trust proxy', env.TRUST_PROXY_HOPS);
   }
 
+  // Mounted ahead of the global helmet on purpose: Swagger UI ships inline
+  // styles and scripts that helmet's default Content-Security-Policy blocks,
+  // which renders /docs blank. Scoping the relaxation to this one path keeps
+  // the strict policy everywhere else.
+  app.use(
+    '/docs',
+    helmet({ contentSecurityPolicy: false }),
+    swaggerUi.serve,
+    swaggerUi.setup(openapiSpec, {
+      customSiteTitle: 'Job Board API — reference',
+      swaggerOptions: { persistAuthorization: true },
+    })
+  );
+
   app.use(helmet());
+
+  app.get('/openapi.json', (_req, res) => {
+    res.json(openapiSpec);
+  });
 
   app.use(
     cors({

@@ -7,7 +7,8 @@ coverage
 .env.*
 !.env.example
 tests
-docs
+# Root-level docs assets only — src/docs/openapi.ts is part of the build.
+/docs
 *.md
 !README.md
 .vscode
