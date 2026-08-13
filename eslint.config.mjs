@@ -47,12 +47,15 @@ export default tseslint.config(
   },
 
   {
+    // supertest types `res.body` as `any`, so asserting on a response payload
+    // trips every unsafe-* rule. Relaxing them here keeps the signal in src/.
     files: ['tests/**/*.ts'],
     rules: {
       'no-console': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
     },
   }
 );
