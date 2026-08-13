@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { requireRole } from '../middleware/requireRole';
 import { validate } from '../middleware/validate';
 import {
   applyToJob,
@@ -11,15 +12,16 @@ import { applySchema, updateStatusSchema } from '../validations/schemas';
 
 const router = express.Router();
 
-// Applicant
-router.post('/', authenticateToken, validate(applySchema), applyToJob);
+// Applicants
+router.post('/', authenticateToken, requireRole('APPLICANT'), validate(applySchema), applyToJob);
 router.get('/my', authenticateToken, getMyApplications);
 
-// Employer
-router.get('/job/:id', authenticateToken, getJobApplications);
+// Employers — ownership of the underlying job is checked in the controller.
+router.get('/job/:id', authenticateToken, requireRole('EMPLOYER'), getJobApplications);
 router.patch(
   '/:id/status',
   authenticateToken,
+  requireRole('EMPLOYER'),
   validate(updateStatusSchema),
   updateApplicationStatus
 );

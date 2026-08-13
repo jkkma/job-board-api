@@ -1,15 +1,25 @@
 import { z } from 'zod';
 
+// bcrypt silently truncates anything past 72 bytes, so accepting longer input
+// would mean the tail of a long password is never actually checked.
+const BCRYPT_MAX_PASSWORD_BYTES = 72;
+
 export const registerSchema = z.object({
   email: z.email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(BCRYPT_MAX_PASSWORD_BYTES, 'Password must be at most 72 characters'),
   role: z.enum(['EMPLOYER', 'APPLICANT'], { message: 'Role must be EMPLOYER or APPLICANT' }),
-  name: z.string().optional(),
+  name: z.string().min(1).max(120).optional(),
 });
 
 export const loginSchema = z.object({
   email: z.email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  // Deliberately not enforcing the register policy here: an account created
+  // under an older rule should fail with 401 on the credentials, not 400 on
+  // the shape of the request.
+  password: z.string().min(1, 'Password is required'),
 });
 
 export const createJobSchema = z.object({
@@ -31,11 +41,15 @@ export const updateJobSchema = z.object({
 
 export const applySchema = z.object({
   jobId: z.uuid('Invalid job ID format'),
-  coverLetter: z.string().optional(),
+  coverLetter: z.string().max(5000, 'Cover letter must be at most 5000 characters').optional(),
 });
 
 export const updateStatusSchema = z.object({
   status: z.enum(['ACCEPTED', 'REJECTED'], { message: 'Status must be ACCEPTED or REJECTED' }),
+});
+
+export const idParamSchema = z.object({
+  id: z.uuid('Invalid ID format'),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

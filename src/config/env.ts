@@ -31,6 +31,11 @@ export const envSchema = z.object({
     .positive()
     .default(15 * 60 * 1000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+
+  // Number of reverse proxies in front of the app. Must be an exact hop count,
+  // never `true` — blindly trusting X-Forwarded-For lets a client spoof its own
+  // IP and walk straight through the rate limiter. 0 means "no proxy".
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 });
 
 export type Env = z.infer<typeof envSchema>;
