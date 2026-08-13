@@ -1,0 +1,42 @@
+# `docker compose up` gives you a migrated, seeded, running API on :5000.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: job_board
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d job_board']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        # Waits for Postgres to actually accept connections, not merely for the
+        # container to exist — otherwise `migrate deploy` races the database.
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/job_board?schema=public
+      JWT_SECRET: ${JWT_SECRET:-compose-only-secret-at-least-32-characters-long}
+      BCRYPT_ROUNDS: 10
+    ports:
+      - '5000:5000'
+    # The seed is idempotent (upserts against fixed UUIDs), so restarting the
+    # stack does not duplicate rows.
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             node dist/prisma/seed.js &&
+             node dist/src/server.js"
+
+volumes:
+  pgdata:
